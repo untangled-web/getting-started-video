@@ -2,7 +2,8 @@
   (:require [om.dom :as dom]
             [om.next :as om :refer-macros [defui]]
             yahoo.intl-messageformat-with-locales
-            [untangled.client.core :as uc]))
+            [untangled.client.core :as uc]
+            [untangled.client.mutations :as m]))
 
 (defui ^:once Item
   static uc/InitialAppState
@@ -20,19 +21,23 @@
 
 (defui ^:once MyList
   static uc/InitialAppState
-  (initial-state [clz params] {:title "Initial List"
-                               :items [(uc/initial-state Item {:label "A"})
-                                       (uc/initial-state Item {:label "C"})
-                                       (uc/initial-state Item {:label "B"})]})
+  (initial-state [clz params] {:title             "Initial List"
+                               :ui/new-item-label ""
+                               :items             [(uc/initial-state Item {:label "A"})
+                                                   (uc/initial-state Item {:label "C"})
+                                                   (uc/initial-state Item {:label "B"})]})
   static om/IQuery
-  (query [this] [:title {:items (om/get-query Item)}])
+  (query [this] [:ui/new-item-label :title {:items (om/get-query Item)}])
   static om/Ident
   (ident [this {:keys [title]}] [:lists/by-title title])
   Object
   (render [this]
-    (let [{:keys [title items]} (om/props this)]
+    (let [{:keys [title items ui/new-item-label] :or {ui/new-item-label ""}} (om/props this)]
       (dom/div nil
         (dom/h4 nil title)
+        (dom/input #js {:value    new-item-label
+                        :onChange (fn [evt] (m/set-string! this :ui/new-item-label :event evt))})
+        (dom/button #js {:onClick #(om/transact! this `[(app/add-item {:label ~new-item-label})])} "+")
         (dom/ul nil
           (map ui-item items))))))
 
