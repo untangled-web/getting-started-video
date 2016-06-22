@@ -6,7 +6,7 @@
 
 (defmethod m/mutate 'app/add-item [{:keys [state ref]} k {:keys [id label]}]
   {:remote true
-   :action (fn []
+   #_:action #_(fn []
              (let [list-path (conj ref :items)
                    new-item (uc/initial-state ui/Item {:id id :label label})
                    item-ident (om/ident ui/Item new-item)]
