@@ -4,48 +4,58 @@
             yahoo.intl-messageformat-with-locales
             [untangled.client.core :as uc]))
 
-(defui ^:once Item
+(defui ^:once Main
   static uc/InitialAppState
-  (initial-state [clz {:keys [label]}] {:label label})
+  (initial-state [clz params] {:id 1 :type :main-tab :extra "MAIN STUFF"})
   static om/IQuery
-  (query [this] [:label])
-  static om/Ident
-  (ident [this {:keys [label]}] [:items/by-label label])
+  (query [this] [:id :type :extra])
   Object
   (render [this]
-    (let [{:keys [label]} (om/props this)]
-      (dom/li nil label))))
+    (let [{:keys [extra]} (om/props this)]
+      (dom/p nil "Main: " extra))))
 
-(def ui-item (om/factory Item {:keyfn :label}))
+(def ui-main (om/factory Main {:keyfn :id}))
 
-(defui ^:once MyList
+(defui ^:once Settings
   static uc/InitialAppState
-  (initial-state [clz params] {:title "Initial List"
-                               :items [(uc/initial-state Item {:label "A"})
-                                       (uc/initial-state Item {:label "C"})
-                                       (uc/initial-state Item {:label "B"})]})
+  (initial-state [clz params] {:id 1 :type :settings-tab :args {:a 1}})
   static om/IQuery
-  (query [this] [:title {:items (om/get-query Item)}])
-  static om/Ident
-  (ident [this {:keys [title]}] [:lists/by-title title])
+  (query [this] [:id :type :args])
   Object
   (render [this]
-    (let [{:keys [title items]} (om/props this)]
-      (dom/div nil
-        (dom/h4 nil title)
-        (dom/ul nil
-          (map ui-item items))))))
+    (let [{:keys [args]} (om/props this)]
+      (dom/p nil "Settings: " (pr-str args)))))
 
-(def ui-list (om/factory MyList))
+(def ui-settings (om/factory Settings {:keyfn :id}))
+
+(defui Switcher
+  static uc/InitialAppState
+  (initial-state [clz params] (uc/initial-state Main {}))
+  static om/IQuery
+  (query [this] {:main-tab (om/get-query Main) :settings-tab (om/get-query Settings)})
+  static om/Ident
+  (ident [this {:keys [type id]}] [type id])
+  Object
+  (render [this]
+    (let [{:keys [type] :as props} (om/props this)]
+      (case type
+        :main-tab (ui-main props)
+        :settings-tab (ui-settings props)
+        (dom/p nil "NO TAB")))))
+
+(def ui-switcher (om/factory Switcher))
 
 (defui ^:once Root
   static uc/InitialAppState
-  (initial-state [clz params] {:list (uc/initial-state MyList {})})
+  (initial-state [clz params] {:ui/react-key "start"
+                               :tabs         (uc/initial-state Switcher {})})
   static om/IQuery
-  (query [this] [:ui/react-key {:list (om/get-query MyList)}])
+  (query [this] [:ui/react-key {:tabs (om/get-query Switcher)}])
   Object
   (render [this]
-    (let [{:keys [ui/react-key list]} (om/props this)]
+    (let [{:keys [ui/react-key tabs]} (om/props this)]
       (dom/div #js {:key react-key}
         (dom/h4 nil "Header")
-        (ui-list list)))))
+        (dom/button #js { :onClick #(om/transact! this '[(app/choose-tab {:tab :main-tab})])} "Main")
+        (dom/button #js { :onClick #(om/transact! this '[(app/choose-tab {:tab :settings-tab})])} "Settings")
+        (ui-switcher tabs)))))
