@@ -4,16 +4,16 @@
   :license {:name "MIT"
             :url  "https://opensource.org/licenses/MIT"}
 
-  :dependencies [[com.taoensso/timbre "4.3.1"]
-                 [commons-codec "1.10"]
-                 [org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.51"]
                  [org.omcljs/om "1.0.0-alpha37"]
-                 [binaryage/devtools "0.5.2" :scope "test"]
-                 [figwheel-sidecar "0.5.3-1" :exclusions [ring/ring-core joda-time org.clojure/tools.reader com.stuartsierra/component]]
                  [navis/untangled-client "0.5.3" :exclusions [cljsjs/react org.omcljs/om]]
                  [navis/untangled-server "0.5.1"]
-                 [navis/untangled-spec "0.3.7-1"]]
+                 [navis/untangled-spec "0.3.7-1"]
+                 [com.taoensso/timbre "4.3.1"]
+                 [commons-codec "1.10"]
+                 [binaryage/devtools "0.5.2" :scope "test"]
+                 [figwheel-sidecar "0.5.3-1" :exclusions [ring/ring-core joda-time org.clojure/tools.reader com.stuartsierra/component]]]
 
   :plugins [[lein-cljsbuild "1.1.3"]]
 
