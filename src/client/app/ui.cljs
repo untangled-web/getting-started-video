@@ -7,11 +7,11 @@
 
 (defui ^:once Item
   static uc/InitialAppState
-  (initial-state [clz {:keys [label]}] {:label label})
+  (initial-state [clz {:keys [id label]}] {:id id :label label})
   static om/IQuery
-  (query [this] [:label])
+  (query [this] [:id :label])
   static om/Ident
-  (ident [this {:keys [label]}] [:items/by-label label])
+  (ident [this {:keys [id]}] [:items/by-id id])
   Object
   (render [this]
     (let [{:keys [label]} (om/props this)]
@@ -23,9 +23,7 @@
   static uc/InitialAppState
   (initial-state [clz params] {:title             "Initial List"
                                :ui/new-item-label ""
-                               :items             [(uc/initial-state Item {:label "A"})
-                                                   (uc/initial-state Item {:label "C"})
-                                                   (uc/initial-state Item {:label "B"})]})
+                               :items             []})
   static om/IQuery
   (query [this] [:ui/new-item-label :title {:items (om/get-query Item)}])
   static om/Ident
@@ -37,7 +35,12 @@
         (dom/h4 nil title)
         (dom/input #js {:value    new-item-label
                         :onChange (fn [evt] (m/set-string! this :ui/new-item-label :event evt))})
-        (dom/button #js {:onClick #(om/transact! this `[(app/add-item {:label ~new-item-label})])} "+")
+        (dom/button #js {:onClick #(do
+                                    (m/set-string! this :ui/new-item-label :value "")
+                                    (om/transact! this `[(app/add-item {:id ~(om/tempid) :label ~new-item-label})
+                                                         (untangled/load {:query         [{:all-items ~(om/get-query Item)}]
+                                                                          :post-mutation fetch/items-loaded})
+                                                         ]))} "+")
         (dom/ul nil
           (map ui-item items))))))
 
@@ -47,10 +50,10 @@
   static uc/InitialAppState
   (initial-state [clz params] {:list (uc/initial-state MyList {})})
   static om/IQuery
-  (query [this] [:ui/react-key {:list (om/get-query MyList)}])
+  (query [this] [:ui/react-key :ui/loading-data {:list (om/get-query MyList)}])
   Object
   (render [this]
-    (let [{:keys [ui/react-key list]} (om/props this)]
+    (let [{:keys [react-key ui/loading-data list]} (om/props this)]
       (dom/div #js {:key react-key}
-        (dom/h4 nil "Header")
+        (dom/h4 nil "Header" (when loading-data " (LOADING)"))
         (ui-list list)))))
