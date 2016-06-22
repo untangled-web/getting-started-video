@@ -3,7 +3,9 @@
     [app.core :refer [app]]
     [cljs.pprint :refer [pprint]]
     [devtools.core :as devtools]
-    [untangled.client.impl.util :as util]))
+    [untangled.client.impl.util :as util]
+    [app.ui :as ui]
+    [untangled.client.core :as uc]))
 
 (enable-console-print!)
 
@@ -13,4 +15,5 @@
 
 (def log-app-state (partial util/log-app-state app))
 
+(reset! app (uc/mount @app ui/Root "app"))
 
