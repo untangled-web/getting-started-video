@@ -13,3 +13,11 @@
                (swap! state assoc-in item-ident new-item)
                ; tack on the ident of the item in the list
                (uc/integrate-ident! state item-ident :append list-path)))})
+
+(defmethod m/mutate 'app/delete-item [{:keys [state]} _ {:keys [label]}]
+  {:action (fn []
+             (js/console.log :delete label)
+             (let [list-path [:lists/by-title "Initial List" :items]
+                   target-ident [:items/by-label label]
+                   new-items (vec (remove #(= target-ident %) (get-in @state list-path)))]
+               (swap! state assoc-in list-path new-items)))})

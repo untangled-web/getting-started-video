@@ -14,8 +14,9 @@
   (ident [this {:keys [label]}] [:items/by-label label])
   Object
   (render [this]
-    (let [{:keys [label]} (om/props this)]
-      (dom/li nil label))))
+    (let [{:keys [label]} (om/props this)
+          on-delete (om/get-computed this :on-delete)]
+      (dom/li nil label (dom/button #js {:onClick #(on-delete label)} "X")))))
 
 (def ui-item (om/factory Item {:keyfn :label}))
 
@@ -32,25 +33,41 @@
   (ident [this {:keys [title]}] [:lists/by-title title])
   Object
   (render [this]
-    (let [{:keys [title items ui/new-item-label] :or {ui/new-item-label ""}} (om/props this)]
+    (let [{:keys [title items ui/new-item-label] :or {ui/new-item-label ""}} (om/props this)
+          on-delete (fn [label] (om/transact! this `[(app/delete-item {:label ~label}) :items/by-label]))]
       (dom/div nil
         (dom/h4 nil title)
         (dom/input #js {:value    new-item-label
                         :onChange (fn [evt] (m/set-string! this :ui/new-item-label :event evt))})
-        (dom/button #js {:onClick #(om/transact! this `[(app/add-item {:label ~new-item-label})])} "+")
+        (dom/button #js {:onClick #(om/transact! this `[(app/add-item {:label ~new-item-label}) :items/by-label])} "+")
         (dom/ul nil
-          (map ui-item items))))))
+          (map (fn [item] (ui-item (om/computed item {:on-delete on-delete}))) items))))))
 
 (def ui-list (om/factory MyList))
 
-(defui ^:once Root
-  static uc/InitialAppState
-  (initial-state [clz params] {:list (uc/initial-state MyList {})})
+(defui ^:once ItemCount
   static om/IQuery
-  (query [this] [:ui/react-key {:list (om/get-query MyList)}])
+  (query [this] [[:items/by-label '_]])
   Object
   (render [this]
-    (let [{:keys [ui/react-key list]} (om/props this)]
+    (let [{:keys [items/by-label]} (om/props this)
+          n (count by-label)]
+      (dom/span #js {:style #js {:float "right"}} n))))
+
+(def ui-count (om/factory ItemCount))
+
+(defui ^:once Root
+  static uc/InitialAppState
+  (initial-state [clz params] {:counter {}
+                               :list    (uc/initial-state MyList {})})
+  static om/IQuery
+  (query [this] [:ui/react-key
+                 {:counter (om/get-query ItemCount)}
+                 {:list (om/get-query MyList)}])
+  Object
+  (render [this]
+    (let [{:keys [ui/react-key list counter]} (om/props this)]
       (dom/div #js {:key react-key}
+        (ui-count counter)
         (dom/h4 nil "Header")
         (ui-list list)))))
